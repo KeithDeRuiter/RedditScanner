@@ -1,0 +1,9 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# Data Store files for this system
+known_users.txt
+examined_submissions.txt
+bot_info.txt
+target_subreddits.txt
