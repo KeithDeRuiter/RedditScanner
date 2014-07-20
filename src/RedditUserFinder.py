@@ -16,9 +16,9 @@ class RedditUserFinder:
     def __init__(self):
         # CONFIGURABLE DATA PARAMETERS
         self.subredditsToCheck = []
-        self.gatherDataThingLimit = 5
-        self.commentExpandingLimit = 5
-        self.commentExpandingThreshold = 2
+        self.gatherDataThingLimit = None
+        self.commentExpandingLimit = None
+        self.commentExpandingThreshold = 1
         # ===
         
         self.knownUsersFile = None
@@ -84,7 +84,7 @@ class RedditUserFinder:
         self.examinedSubmissionsFile.truncate()
         
 
-    #Writes out the users and submissions for a single subreddit
+    #Writes out the users and submissions for a single subreddit UNUSED
     def writeSingleUsersAndSubmissionsToFile(self, subreddit, users, submissions):
         subredditSpecificUserFile = open(str(subreddit + "_users.txt"), "w")
         subredditSpecificSubmissionsFile = open(str(subreddit + "_submissions.txt"), "w")
@@ -146,9 +146,9 @@ class RedditUserFinder:
             for line in self.targetSubredditsFile:
                 #line = self.targetSubredditsFile.readline()
                 if not line.startswith('r/'):
-                    print("Line not r/ formatted: " + line)
+                    print("Line not r/ formatted: " + line.rstrip('\n'))
                     continue
-                print("Adding {0} to scan list".format(line))
+                print("Adding {0} to scan list".format(line.rstrip('\n')))
                 currentSubreddit = line.rstrip('\n').split("/")[1]  #get just the nanem of the subreddit
                 self.subredditsToCheck.append(currentSubreddit);
                                      
@@ -223,11 +223,14 @@ class RedditUserFinder:
         #============ end data reading
         
         
+        #============ Begin data gathering
+        totalNumNewUsersFound = 0
+        
         for subreddit in self.subredditsToCheck:
-            print("Checking subreddit r/{0}".format(subreddit))
+            print("\nChecking subreddit r/{0}".format(subreddit))
             
-            #allSubmissions = self.r.get_subreddit(subreddit).get_top(limit=self.gatherDataThingLimit)
-            allSubmissions = self.r.get_subreddit(subreddit).get_hot(limit=self.gatherDataThingLimit)
+            allSubmissions = self.r.get_subreddit(subreddit).get_top(limit=self.gatherDataThingLimit)
+            #allSubmissions = self.r.get_subreddit(subreddit).get_hot(limit=self.gatherDataThingLimit)
             allAuthors = set()
             numSubmissions = 0
             
@@ -235,7 +238,7 @@ class RedditUserFinder:
                 #increment numSubmissions
                 numSubmissions += 1
 
-                pprint(vars(submission))
+                #pprint(vars(submission))
 
                 #Get title
                 title = submission.title
@@ -266,7 +269,6 @@ class RedditUserFinder:
                 #Scan Comments
                 
                 submission.replace_more_comments(limit=self.commentExpandingLimit, threshold=self.commentExpandingThreshold)
-                print ('sdfghjkllkhgfd')
 
                 flatComments = praw.helpers.flatten_tree(submission.comments)
                 for c in flatComments:
@@ -288,6 +290,8 @@ class RedditUserFinder:
                 
                 
             print("Received {0} Submissions".format(numSubmissions))
+            print("{0} new users found in {1}".format(len(allAuthors), subreddit));
+            totalNumNewUsersFound += len(allAuthors)
             allAuthorsBySubreddit[subreddit] = set.union(allAuthors, allAuthorsBySubreddit[subreddit]) #Add in all the newly found authors to the set of authors in this subreddit
             #end check for this subreddit
 
@@ -302,7 +306,8 @@ class RedditUserFinder:
         countingGrammarString = 's'
         if numFound == 1:
             countingGrammarString = ''
-        print("Mission Accomplished: {0} user{1} found in {2}".format(numFound, countingGrammarString, elapsedTimeStr))
+        print("\n{0} new users recorded in total".format(totalNumNewUsersFound))
+        print("\nMission Accomplished: {0} user{1} (in the intersection) found in {2}".format(numFound, countingGrammarString, elapsedTimeStr))
         
         # print all authors
         for author in intersectionOfAuthorship:
@@ -316,7 +321,7 @@ class RedditUserFinder:
 
 def signal_handler(signal, frame):
     print('You pressed Ctrl+C!')
-    #writeUsersAndSubmissionsToFile(allAuthorsBySebreddit, alreadyExaminedSubmissionIDs, self.knownUsersFile, self.examinedSubmissionsFile)
+    #writeUsersAndSubmissionsToFile(allAuthorsBySubreddit, alreadyExaminedSubmissionIDs, self.knownUsersFile, self.examinedSubmissionsFile)
     sys.exit(0)
 
 
