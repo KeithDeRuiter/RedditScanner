@@ -145,8 +145,12 @@ class RedditUserFinder:
             #for i in range(0, fileLength):
             for line in self.targetSubredditsFile:
                 #line = self.targetSubredditsFile.readline()
+                
                 if not line.startswith('r/'):
-                    print("Line not r/ formatted: " + line.rstrip('\n'))
+                    if line.startswith('#'):
+                        print("Ignoring " + line.rstrip('\n'))
+                    else:
+                        print("Line not # or r/ formatted: " + line.rstrip('\n'))
                     continue
                 print("Adding {0} to scan list".format(line.rstrip('\n')))
                 currentSubreddit = line.rstrip('\n').split("/")[1]  #get just the nanem of the subreddit
